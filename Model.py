@@ -37,7 +37,6 @@ class ContactSchema(ma.Schema):
     username = fields.String(required=True)
     firstname = fields.String(required=False)
     lastname = fields.String(required=False)
-    # email = fields.List(required=False)
 
 
 class EmailSchema(ma.Schema):

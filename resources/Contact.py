@@ -10,6 +10,36 @@ emails_schema = EmailSchema(many=True)
 
 class ContactResource(Resource):
     def get(self):
+        """
+        get endpoint
+        if no user name is passed gets all the contacts, else returns contact and all emails for that user
+        expects requests
+        Content-Type application/json
+        Body as Raw Json
+        {
+            "username":"testuser1"
+        }
+                :return:
+                {
+                    "status": "success",
+                    "data": [
+                        {
+                            "username": "testuser1",
+                            "id": 1,
+                            "firstname": "zee1",
+                            "lastname": "zee1",
+                            "email": "zee1@zee1.com"
+                        },
+                        {
+                            "username": "testuser2",
+                            "id": 2,
+                            "firstname": "zee22",
+                            "lastname": "zee2",
+                            "email": "zee222@zee222.com; zee22@zee222.com"
+                        }
+                    ]
+                }
+        """
 
         ###
         json_data = request.get_json(force=False)
@@ -48,6 +78,32 @@ class ContactResource(Resource):
         return result_list
 
     def post(self):
+        """
+        post request endpoint
+        expects requests
+        Content-Type application/json
+        Body as Raw Json
+        ex:
+        {
+            "username": "testuser1",
+            "id": 1,
+            "firstname": "zee1",
+            "lastname": "zee1",
+            "email": "zee1@zee1.com"
+        }
+
+        :return:
+        {
+            "status": "success",
+            "data": {
+                "username": "testuser1",
+                "id": 3,
+                "firstname": "zee1",
+                "lastname": "zee1",
+                "email": "zee1@zee1.com"
+            }
+        }
+        """
         json_data = request.get_json(force=True)
         if not json_data:
             return {'message': 'No input data provided'}, 400
@@ -81,6 +137,21 @@ class ContactResource(Resource):
         return {"status": 'success', 'data': result}, 201
 
     def put(self):
+        """
+        put request endpoint
+        expects requests
+        Content-Type application/json
+        Body as Raw Json
+        ex:
+        {
+            "username": "testuser1",
+            "firstname": "zee1",
+            "lastname": "zee1",
+            "email": "zee1@zee1.com"
+        }
+
+        :return:
+        """
         json_data = request.get_json(force=True)
         if not json_data:
             return {'message': 'No input data provided'}, 400
@@ -88,18 +159,17 @@ class ContactResource(Resource):
         data, errors = contact_schema.load(json_data)
         if errors:
             return errors, 422
-        contact = Contact.query.filter_by(id=data['id']).first()
-
+        contact = Contact.query.filter_by(username=data['username']).first()
+        contact_rec = contact_schema.dump(contact).data
         if not contact:
             return {'message': 'Contact does not exist'}, 400
         contact.username = data['username']
-        contact.firstname = data['firstname']
-        contact.lastname = data['lastname']
+        contact.firstname = data['firstname'] if 'firstname' in data else contact_rec['firstname']
+        contact.lastname = data['lastname'] if 'lastname' in data else contact_rec['lastname']
 
         # lets try to update the email if new email add it
         # contact = Contact.query.filter_by(id=data['id']).first()
 
-        contact_rec = contact_schema.dump(contact).data
         data_email, error = email_shema.load(json_data)
         if data_email['email']:
             # get all emails id for this contact if any
@@ -111,7 +181,7 @@ class ContactResource(Resource):
             if existing_emails:
                 for e in existing_emails:
                     if e['email'] == data_email['email']:
-                        #already exisits do nothing
+                        # already exisits do nothing
                         found = True
                         found_email_key = e['id']
                         break
@@ -128,6 +198,16 @@ class ContactResource(Resource):
         return {"status": 'success', 'data': result}, 204
 
     def delete(self):
+        """
+        Delete request, expects requests
+        Content-Type application/json
+        Body as Raw Json
+        ex:
+        {
+	        "username":"testuser1"
+        }
+        :return:
+        """
         json_data = request.get_json(force=True)
         if not json_data:
             return {'message': 'No input data provided'}, 400
