@@ -1,3 +1,6 @@
+## Install dependencies
+    pip install -r requirement.txt
+
 ## create db
 
     python migrate db init
